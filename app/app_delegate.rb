@@ -1,8 +1,12 @@
 class AppDelegate
   def application(application, didFinishLaunchingWithOptions:launchOptions)
     @window = UIWindow.alloc.initWithFrame(UIScreen.mainScreen.bounds)
+    controller = AuthenticationController.alloc.initWithNibName(nil, bundle:nil)
+    @window.rootViewController = UINavigationController.alloc.initWithRootViewController(controller)
     @window.makeKeyAndVisible
+  end
 
-    true
+  def self.api_root
+    'http://simple.wikipedia.beta.wmflabs.org/w/api.php?format=json'
   end
 end
