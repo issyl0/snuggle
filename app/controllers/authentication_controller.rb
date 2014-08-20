@@ -46,10 +46,10 @@ class AuthenticationController < UIViewController
         cookie = basic_auth.headers['Set-Cookie']
         if basic_auth_body['login']['result'] == 'NeedToken'
           BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}", { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |token_auth|
-            if token_auth.ok?
+            if token_auth.ok? && has_rollback_permission?(rollback_query, cookie)
               App.alert('Logged in.')
             else
-              App.alert('Authentication failed.')
+              App.alert('Authentication failed. Do you have rollback rights?')
             end
           end
         else
@@ -63,6 +63,16 @@ class AuthenticationController < UIViewController
     BW::HTTP.post(AppDelegate.api_root + '&action=logout') do |r|
       App.alert('Logged out') if r.ok?
     end
+  end
+
+  def has_rollback_permission?(rq, cookie)
+    # Rollback permissions are needed because this tool provides a
+    # fast way of reverting edits.
+    rollback = false
+    BW::HTTP.get(rq, { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |r|
+      rollback = BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
+    end
+    return rollback 
   end
 
 end
