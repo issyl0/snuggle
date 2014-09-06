@@ -28,7 +28,7 @@ class AuthenticationController < UIViewController
     @username = username_textfield
     self.view.addSubview(username_textfield)
 
-    # Password textfield
+    # Password textfield.
     password_textfield = UITextField.alloc.initWithFrame([[100,80],[100,80]])
     password_textfield.placeholder = 'password'
     password_textfield.textColor = UIColor.blackColor
@@ -39,6 +39,7 @@ class AuthenticationController < UIViewController
   def login
     login_query = "#{AppDelegate.api_root}&action=login&lgname=#{@username}&lgpassword=#{@password}"
     rollback_query = "#{AppDelegate.api_root}&action=query&meta=userinfo&uiprop=rights"
+
     BW::HTTP.post(login_query) do |basic_auth|
       basic_auth_body = BW::JSON.parse(basic_auth.body)
 
@@ -56,7 +57,7 @@ class AuthenticationController < UIViewController
           App.alert('Something went wrong.')
         end
       end
-    end 
+    end
   end
 
   def logout
