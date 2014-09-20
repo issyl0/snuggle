@@ -32,6 +32,7 @@ class AuthenticationController < UIViewController
     password_textfield = UITextField.alloc.initWithFrame([[100,80],[100,80]])
     password_textfield.placeholder = 'password'
     password_textfield.textColor = UIColor.blackColor
+    password_textfield.secureTextEntry = true
     @password = password_textfield
     self.view.addSubview(password_textfield)
   end
