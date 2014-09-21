@@ -49,7 +49,7 @@ class AuthenticationController < UIViewController
         if basic_auth_body['login']['result'] == 'NeedToken'
           BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}", { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |token_auth|
             if token_auth.ok? && has_rollback_permission?(rollback_query, cookie)
-              App.alert('Logged in.')
+              self.navigationController.pushViewController(RecentChangesController.alloc.initWithNibName(nil, bundle:nil), animated: true)
             else
               App.alert('Authentication failed. Do you have rollback rights?')
             end
@@ -72,7 +72,7 @@ class AuthenticationController < UIViewController
     # fast way of reverting edits.
     rollback = false
     BW::HTTP.get(rq, { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |r|
-      rollback = BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
+      rollback = true if BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
     end
     return rollback 
   end
