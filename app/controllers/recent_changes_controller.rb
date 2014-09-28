@@ -30,7 +30,12 @@ class RecentChangesController < UIViewController
         # Hack a URL together to show the mobile website diff, 'cause
         # loadHTMLString refused to work when I got the entire diff
         # out of the API and wanted to display it in a UIWebView.
-        url = NSURL.URLWithString("https://en.m.wikipedia.org/w/index.php?title=#{recent_rev_title.gsub(' ', '%20')}&curid=#{new_rev}&diff=#{rev_id}&oldrev=#{old_rev}")
+        url = NSURL.URLWithString("https://en.m.wikipedia.org/w/index.php" \
+                                  "?title=#{recent_rev_title.gsub(' ', '%20').gsub('(', '&#40;').gsub(')', '&#41')}" \
+                                  "&curid=#{new_rev}" \
+                                  "&diff=#{rev_id}" \
+                                  "&oldrev=#{old_rev}"
+                                 )
         @diff_view.loadRequest(NSURLRequest.requestWithURL(url))
         self.view.addSubview(@diff_view)
       end
