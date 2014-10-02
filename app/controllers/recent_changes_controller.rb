@@ -14,6 +14,15 @@ class RecentChangesController < UIViewController
     recent_changes_from_anonymous_users
 
     @diff_view = UIWebView.alloc.initWithFrame(view.bounds)
+
+    @next_button = UIButton.buttonWithType(UIButtonTypeRoundedRect)
+                           .setTitle('Next',
+                                     forState: UIControlStateNormal)
+    @next_button.backgroundColor = UIColor.greenColor
+    @next_button.frame = [[600,600],[100,100]]
+    @next_button.addTarget(self,
+                           action:           'recent_changes_from_anonymous_users',
+                           forControlEvents: UIControlEventTouchUpInside)
   end
 
   def recent_changes_from_anonymous_users
@@ -38,6 +47,8 @@ class RecentChangesController < UIViewController
                                  )
         @diff_view.loadRequest(NSURLRequest.requestWithURL(url))
         self.view.addSubview(@diff_view)
+
+        self.view.addSubview(@next_button)
       end
 
     end
