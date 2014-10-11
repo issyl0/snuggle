@@ -38,17 +38,18 @@ class AuthenticationController < UIViewController
   end
 
   def login
-    login_query = "#{AppDelegate.api_root}&action=login&lgname=#{@username}&lgpassword=#{@password}"
+    login_query = "#{AppDelegate.api_root}&action=login&lgname=#{@username.text}&lgpassword=#{@password.text}"
     rollback_query = "#{AppDelegate.api_root}&action=query&meta=userinfo&uiprop=rights"
 
     BW::HTTP.post(login_query) do |basic_auth|
       basic_auth_body = BW::JSON.parse(basic_auth.body)
 
       if basic_auth.ok?
-        cookie = basic_auth.headers['Set-Cookie']
+        $cookie = basic_auth.headers['Set-Cookie']
         if basic_auth_body['login']['result'] == 'NeedToken'
-          BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}", { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |token_auth|
-            if token_auth.ok? && has_rollback_permission?(rollback_query, cookie)
+          $session_id = basic_auth_body['login']['sessionid']
+          BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}", { :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |token_auth|
+            if token_auth.ok? && has_rollback_permission?(rollback_query)
               self.navigationController.pushViewController(RecentChangesController.alloc.initWithNibName(nil, bundle:nil), animated: true)
             else
               App.alert('Authentication failed. Do you have rollback rights?')
@@ -67,14 +68,17 @@ class AuthenticationController < UIViewController
     end
   end
 
-  def has_rollback_permission?(rq, cookie)
+  def has_rollback_permission?(rq)
     # Rollback permissions are needed because this tool provides a
     # fast way of reverting edits.
-    rollback = false
-    BW::HTTP.get(rq, { :cookie => cookie, :headers => {'Set-Cookie' => cookie} }) do |r|
-      rollback = true if BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
+    BW::HTTP.get(rq, { :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |r|
+      if BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
+        @rollback = true
+      else
+        @rollback = false
+      end
     end
-    return rollback 
+    return @rollback
   end
 
 end
