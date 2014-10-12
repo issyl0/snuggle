@@ -76,16 +76,28 @@ class RecentChangesController < UIViewController
   end
 
   def revert_change
-    BW::HTTP.get("#{AppDelegate.api_root}&action=query&prop=revisions&rvtoken=rollback&titles=#{@recent_rev_title}", { :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |rb_token|
+    BW::HTTP.get("#{AppDelegate.api_root}&action=query&prop=revisions&rvtoken=rollback&titles=#{@recent_rev_title}",
+                  { :sessionid => $session_id,
+                    :headers => {'Set-Cookie' => $cookie}
+                  }
+                 ) do |rb_token|
       rollback_token_content = BW::JSON.parse(rb_token.body)['query']['pages'].first
       old_user = rollback_token_content[1]['revisions'][0]['user']
+      # The MediaWiki API requires that we encode the + in the token.
       rollback_token = rollback_token_content[1]['revisions'][0]['rollbacktoken'].gsub('+', '%2B')
-      BW::HTTP.post("#{AppDelegate.api_root}&action=rollback&user=#{old_user}&title=#{@recent_rev_title}", { payload: { :token => rollback_token }, :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |rollback_response|
+
+      BW::HTTP.post("#{AppDelegate.api_root}&action=rollback&user=#{old_user}&title=#{@recent_rev_title}",
+                    { payload: { :token => rollback_token },
+                      :sessionid => $session_id,
+                      :headers => {'Set-Cookie' => $cookie}
+                    }
+                   ) do |rollback_response|
         if BW::JSON.parse(rollback_response.body)['error']
           App.alert('Something went wrong. Moving on to the next revision...')
         end
       end
     end
+
     # Call the recent changes method again and get the next
     # revision once reverting and warning is done (or not).
     recent_changes_from_anonymous_users

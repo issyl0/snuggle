@@ -46,9 +46,15 @@ class AuthenticationController < UIViewController
 
       if basic_auth.ok?
         $cookie = basic_auth.headers['Set-Cookie']
+
         if basic_auth_body['login']['result'] == 'NeedToken'
           $session_id = basic_auth_body['login']['sessionid']
-          BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}", { :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |token_auth|
+
+          BW::HTTP.post("#{login_query}&lgtoken=#{basic_auth_body['login']['token']}",
+                        { :sessionid => $session_id,
+                          :headers => {'Set-Cookie' => $cookie}
+                        }
+                       ) do |token_auth|
             if token_auth.ok? && has_rollback_permission?(rollback_query)
               self.navigationController.pushViewController(RecentChangesController.alloc.initWithNibName(nil, bundle:nil), animated: true)
             else
@@ -71,7 +77,11 @@ class AuthenticationController < UIViewController
   def has_rollback_permission?(rq)
     # Rollback permissions are needed because this tool provides a
     # fast way of reverting edits.
-    BW::HTTP.get(rq, { :sessionid => $session_id, :headers => {'Set-Cookie' => $cookie} }) do |r|
+    BW::HTTP.get(rq, {
+                      :sessionid => $session_id,
+                      :headers => {'Set-Cookie' => $cookie}
+                     }
+                ) do |r|
       if BW::JSON.parse(r.body)['query']['userinfo']['rights'].include?('rollback')
         @rollback = true
       else
