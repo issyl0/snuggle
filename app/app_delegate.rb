@@ -7,6 +7,6 @@ class AppDelegate
   end
 
   def self.api_root
-    'http://simple.wikipedia.beta.wmflabs.org/w/api.php?format=json'
+    'http://en.wikipedia.org/w/api.php?format=json'
   end
 end
