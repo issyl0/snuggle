@@ -13,13 +13,14 @@ class RecentChangesController < UIViewController
 
     recent_changes_from_anonymous_users
 
-    @diff_view = UIWebView.alloc.initWithFrame(view.bounds)
+    @diff_view = UIWebView.alloc.initWithFrame(CGRectMake(0, 64, 600, 800))
+    @diff_view.scalesPageToFit = true
 
     @next_button = UIButton.buttonWithType(UIButtonTypeRoundedRect)
                            .setTitle('Next',
                                      forState: UIControlStateNormal)
     @next_button.backgroundColor = UIColor.greenColor
-    @next_button.frame = [[600,600],[100,100]]
+    @next_button.frame = [[400,850],[100,100]]
     @next_button.addTarget(self,
                            action:           'recent_changes_from_anonymous_users',
                            forControlEvents: UIControlEventTouchUpInside)
@@ -28,7 +29,7 @@ class RecentChangesController < UIViewController
                              .setTitle('Revert',
                                        forState: UIControlStateNormal)
     @revert_button.backgroundColor = UIColor.redColor
-    @revert_button.frame = [[350,600],[100,100]]
+    @revert_button.frame = [[200,850],[100,100]]
     @revert_button.addTarget(self,
                              action:           'revert_change',
                              forControlEvents: UIControlEventTouchUpInside)
@@ -48,20 +49,25 @@ class RecentChangesController < UIViewController
       BW::HTTP.get("#{AppDelegate.api_root}&action=query&prop=revisions&titles=#{@recent_rev_title}&rvdiffto=prev") do |diff|
         if !diff.nil?
           diff_content = BW::JSON.parse(diff.body)['query']['pages'].first
-          rev_id = diff_content[1]['revisions'][0]['revid']
-          old_rev = diff_content[1]['revisions'][0]['diff']['from']
-          new_rev = diff_content[1]['revisions'][0]['diff']['to']
+          diff_html = diff_content[1]['revisions'][0]['diff']['*']
 
-          # Hack a URL together to show the mobile website diff, 'cause
-          # loadHTMLString refused to work when I got the entire diff
-          # out of the API and wanted to display it in a UIWebView.
-          url = NSURL.URLWithString("https://en.m.wikipedia.org/w/index.php" \
-                                    "?title=#{@recent_rev_title.gsub(' ', '%20').gsub('(', '&#40;').gsub(')', '&#41')}" \
-                                    "&curid=#{new_rev}" \
-                                    "&diff=#{rev_id}" \
-                                    "&oldrev=#{old_rev}"
-                                  )
-          @diff_view.loadRequest(NSURLRequest.requestWithURL(url))
+          @diff_view.loadHTMLString("<html>
+                                      <style type='text/css'>
+                                        ins {
+                                          background-color: #75C877;
+                                          text-decoration: none;
+                                        }
+                                        del {
+                                          background-color: #E07076;
+                                          text-decoration: none;
+                                        }
+                                      </style>
+                                      <body>
+                                        #{diff_html}
+                                      </body>
+                                     </html>",
+                                     baseURL: nil)
+
           self.view.addSubview(@diff_view)
         else
           App.alert('Has your Internet connection died? Trying again...')
